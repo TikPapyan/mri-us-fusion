@@ -1,14 +1,36 @@
 import numpy as np
 
 def dtd(u):
-    u = np.asarray(u)
-    d = np.zeros(u.shape)
-
-    u_flat = u.flatten()
-    d_flat = d.flatten()
-
-    d_flat[1:-1] = 2 * u_flat[1:-1] - u_flat[:-2] - u_flat[2:]
-    d_flat[0] = u_flat[0] - u_flat[1]
-    d_flat[-1] = u_flat[-1] - u_flat[-2]
-
-    return d_flat.reshape(u.shape)
+    """
+    Second derivative operator
+    """
+    d = np.zeros_like(u)
+    if len(u.shape) == 1:
+        # 1D case
+        n = len(u)
+        if n > 2:
+            d[1:-1] = 2 * u[1:-1] - u[:-2] - u[2:]
+        if n > 0:
+            d[0] = u[0] - u[1]
+            d[-1] = u[-1] - u[-2]
+    else:
+        # 2D case - apply along each dimension
+        d = np.zeros_like(u)
+        # Apply in first dimension
+        if u.shape[0] > 2:
+            d[1:-1, :] = 2 * u[1:-1, :] - u[:-2, :] - u[2:, :]
+        if u.shape[0] > 0:
+            d[0, :] = u[0, :] - u[1, :]
+            d[-1, :] = u[-1, :] - u[-2, :]
+        
+        # Apply in second dimension
+        if u.shape[1] > 2:
+            d[:, 1:-1] += 2 * u[:, 1:-1] - u[:, :-2] - u[:, 2:]
+        if u.shape[1] > 0:
+            d[:, 0] += u[:, 0] - u[:, 1]
+            d[:, -1] += u[:, -1] - u[:, -2]
+        
+        # Average the two directions
+        d = d / 2
+    
+    return d

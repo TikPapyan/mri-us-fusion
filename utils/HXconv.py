@@ -1,35 +1,41 @@
 import numpy as np
-from scipy.fft import fft2, ifft2, fftshift
-from numpy import pad
+from scipy import ndimage
 
 def HXconv(x, B, conv=None):
+    """
+    Convolution operations in frequency domain
+    """
     m, n = x.shape
     m0, n0 = B.shape
-
-    Bpad = pad(
-        B,
-        (
-            (int(np.floor((m - m0 + 1) / 2)), int(np.ceil((m - m0 - 1) / 2))),
-            (int(np.floor((n - n0 + 1) / 2)), int(np.ceil((n - n0 - 1) / 2)))
-        ),
-        mode='constant'
-    )
-
-    Bpad = fftshift(Bpad)
-    BF = fft2(Bpad)
+    
+    # Pad B to match x dimensions
+    pad_top = (m - m0 + 1) // 2
+    pad_bottom = (m - m0 - 1) // 2
+    pad_left = (n - n0 + 1) // 2
+    pad_right = (n - n0 - 1) // 2
+    
+    Bpad = np.pad(B, ((pad_top, pad_bottom), (pad_left, pad_right)), mode='constant')
+    
+    # Shift and compute FFT
+    Bpad = np.fft.ifftshift(Bpad)
+    BF = np.fft.fft2(Bpad)
     BCF = np.conj(BF)
-    B2F = np.abs(BF) ** 2
-
+    B2F = np.abs(BF)**2
+    
     if conv is None:
-        return BF, BCF, B2F, None, Bpad
-
-    if conv == 'Hx':
-        y = np.real(ifft2(BF * fft2(x)))
+        return BF, BCF, B2F
+    elif conv == 'Hx':
+        # Ensure x is complex for FFT
+        x_complex = x.astype(np.complex128) if np.isrealobj(x) else x
+        y = np.real(np.fft.ifft2(BF * np.fft.fft2(x_complex)))
+        return BF, BCF, B2F
     elif conv == 'HTx':
-        y = np.real(ifft2(BCF * fft2(x)))
+        x_complex = x.astype(np.complex128) if np.isrealobj(x) else x
+        y = np.real(np.fft.ifft2(BCF * np.fft.fft2(x_complex)))
+        return BF, BCF, B2F
     elif conv == 'HTHx':
-        y = np.real(ifft2(B2F * fft2(x)))
+        x_complex = x.astype(np.complex128) if np.isrealobj(x) else x
+        y = np.real(np.fft.ifft2(B2F * np.fft.fft2(x_complex)))
+        return BF, BCF, B2F
     else:
-        raise ValueError("Unknown convolution mode")
-
-    return BF, BCF, B2F, y
+        raise ValueError("conv must be 'Hx', 'HTx', or 'HTHx'")

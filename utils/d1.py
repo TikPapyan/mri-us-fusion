@@ -1,12 +1,9 @@
 import numpy as np
 
 def d1(u):
-    u = np.asarray(u)
-    d = np.zeros(u.shape)
-
-    u_flat = u.flatten()
-    d_flat = d.flatten()
-
-    d_flat[:-1] = u_flat[1:] - u_flat[:-1]
-
-    return d_flat.reshape(u.shape)
+    """
+    Returns the derivative in the first direction (horizontal)
+    """
+    d = np.zeros_like(u)
+    d[:-1] = u[1:] - u[:-1]
+    return d
