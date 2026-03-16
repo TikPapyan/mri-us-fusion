@@ -3,6 +3,7 @@ Ce fichier regroupe des fonctions de Matlab qui ne trouvent pas leur équivalent
 pour le bon fonctionnement du programme.
 """
 
+import os
 import torch
 import torch.nn as nn
 import numpy as np
@@ -122,7 +123,10 @@ class DnCNN(nn.Module):
 def load_dncnn(yu):
     # Modèle DnCNN
     model = DnCNN()
-    state_dict = torch.load('models/net.pth', map_location=torch.device('cpu'))
+    # Resolve path to 'models/net.pth' relative to this PALM package
+    palm_dir = os.path.dirname(os.path.abspath(__file__))
+    models_path = os.path.join(palm_dir, "models", "net.pth")
+    state_dict = torch.load(models_path, map_location=torch.device('cpu'))
     new_state_dict = OrderedDict()
     for k, v in state_dict.items():
         new_state_dict[k.replace('module.', '')] = v

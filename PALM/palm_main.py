@@ -25,13 +25,12 @@ import matplotlib.pyplot as plt
 import os
 from imageio import imwrite
 
-# --- Project files ---
-from matlab_tools import load_dncnn
-from utils_palm import estimate_c, FusionPALM
+# --- Project files (relative imports within PALM package) ---
+from .matlab_tools import load_dncnn
+from .utils_palm import estimate_c, FusionPALM
 
 
 def show_image(img, title='Image'):
-    """Display grayscale image"""
     plt.figure(figsize=(6,6))
     plt.imshow(img, cmap='gray')
     plt.title(title)
@@ -40,9 +39,15 @@ def show_image(img, title='Image'):
 
 
 def chooseDataset():
-    """Load MRI and Ultrasound dataset"""
-    irm_data = scipy.io.loadmat('images/Data1/irm.mat')
-    us_data = scipy.io.loadmat('images/Data1/us.mat')
+    palm_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(palm_dir)
+    data_dir = os.path.join(project_root, "data")
+
+    irm_path = os.path.join(data_dir, "irm.mat")
+    us_path = os.path.join(data_dir, "us.mat")
+
+    irm_data = scipy.io.loadmat(irm_path)
+    us_data = scipy.io.loadmat(us_path)
 
     irm = irm_data['irm'].astype(np.float64)
     us = us_data['us'].astype(np.float64)

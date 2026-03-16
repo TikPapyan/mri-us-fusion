@@ -8,9 +8,9 @@ from skimage.util import view_as_blocks
 
 
 # --- Fichiers ---
-from ResizeRight.resize_right import resize
-from ResizeRight.interp_methods import cubic
-from matlab_tools import blockproc, fspecial
+from .ResizeRight.resize_right import resize
+from .ResizeRight.interp_methods import cubic
+from .matlab_tools import blockproc, fspecial
 
 # --- Fonctions ---
 def d1(u):

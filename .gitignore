@@ -2,18 +2,11 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,visualstudiocode
 
 # Large files
-DDFM/models/256x256_diffusion_uncond.pt
-PALM/models/net.pth
-DDFM/input/ir/irm.png
-DDFM/input/vi/us.png
-PALM/images/Data1/*.mat
-PALM/images/Data1/*.png
+DDFM/models/*.pt
+PALM/models/*.pth
+data/*.mat
 
-# Output directories
-DDFM/output/
-PALM/results/
-manual_experiments/
-output/
+# Temporary files
 __pycache__/
 *.pyc
 .DS_Store
