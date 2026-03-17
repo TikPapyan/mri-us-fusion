@@ -189,7 +189,19 @@ def estimate_c(irm, us, d=6):
     xu = xu.reshape((n1, n2))
     return cest.flatten(), xu
 
-def FusionPALM(y1, y2, c, tau1, tau2, tau3, tau4, d, m_iteration=10):
+def FusionPALM(
+    y1,
+    y2,
+    c,
+    tau1,
+    tau2,
+    tau3,
+    tau4,
+    d,
+    m_iteration=10,
+    mode="full",
+    return_x1=False,
+):
     n1, n2 = y2.shape
     B = fspecial('gaussian', (5,5), 4)
     
@@ -233,8 +245,14 @@ def FusionPALM(y1, y2, c, tau1, tau2, tau3, tau4, d, m_iteration=10):
     x2 = y2 + c1
     x1 = yint
     
+    if mode not in {"full", "us_only", "mri_only"}:
+        raise ValueError("mode must be one of: 'full', 'us_only', 'mri_only'")
+
     # Boucle d'itération PALM
     for i in range(m_iteration):
-        x1 = FSR_xirm_NL(x1, y1, x2, gradY, B, d, c, F2D, tau, tau10)
-        x2, _, _ = Descente_grad_xus_NL(y2, x1, x2, c, gamma, tau1, tau2, tau3)
-    return x2
+        if mode != "us_only":
+            x1 = FSR_xirm_NL(x1, y1, x2, gradY, B, d, c, F2D, tau, tau10)
+        if mode != "mri_only":
+            x2, _, _ = Descente_grad_xus_NL(y2, x1, x2, c, gamma, tau1, tau2, tau3)
+
+    return x1 if return_x1 else x2

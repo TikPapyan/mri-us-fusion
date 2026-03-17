@@ -151,34 +151,21 @@ def run_palm(iterations=5, mode='full'):
     yu = us / us.max()
     xu0 = load_dncnn(yu)  # DnCNN denoising
     print(f"  DnCNN denoising complete")
-    
-    if mode == 'full':
-        # Use FusionPALM from utils_palm
-        result = FusionPALM(
-            ym,
-            xu0,
-            c,
-            PALM_PARAMS['tau1'],
-            PALM_PARAMS['tau2'],
-            PALM_PARAMS['tau3'],
-            PALM_PARAMS['tau4'],
-            PALM_PARAMS['d'],
-            iterations
-        )
-    else:
-        print(f"  WARNING: Mode '{mode}' not fully implemented yet")
-        print(f"  Using full PALM as fallback")
-        result = FusionPALM(
-            ym,
-            xu0,
-            c,
-            PALM_PARAMS['tau1'],
-            PALM_PARAMS['tau2'],
-            PALM_PARAMS['tau3'],
-            PALM_PARAMS['tau4'],
-            PALM_PARAMS['d'],
-            iterations
-        )
+
+    return_x1 = (mode == "mri_only")
+    result = FusionPALM(
+        ym,
+        xu0,
+        c,
+        PALM_PARAMS["tau1"],
+        PALM_PARAMS["tau2"],
+        PALM_PARAMS["tau3"],
+        PALM_PARAMS["tau4"],
+        PALM_PARAMS["d"],
+        iterations,
+        mode=mode,
+        return_x1=return_x1,
+    )
     
     # Normalize and save
     result = (result - result.min()) / (result.max() - result.min())
@@ -192,6 +179,31 @@ def run_palm(iterations=5, mode='full'):
     print(f"  Saved to: {output_path}")
     
     return output_path
+
+
+def run_option(option, palm_iterations=(1, 5), ddfm_steps=(10, 25, 50, 75, 100)):
+    """
+    Option 1: PALM US-only + DDFM
+    Option 2: PALM MRI-only + DDFM
+    """
+    if option not in {"option1", "option2"}:
+        raise ValueError("option must be 'option1' or 'option2'")
+
+    mode = "us_only" if option == "option1" else "mri_only"
+    prefix = "O1" if option == "option1" else "O2"
+
+    print(f"\nRunning {option}: PALM({mode}) + DDFM")
+
+    palm_outputs = {}
+    for it in palm_iterations:
+        palm_path = run_palm(it, mode=mode)
+        palm_outputs[it] = palm_path
+
+    for it, palm_path in palm_outputs.items():
+        for steps in ddfm_steps:
+            exp_name = f"{prefix}_P{it}_D{steps}"
+            run_hybrid(palm_path, exp_name, steps)
+            time.sleep(2)
 
 # ============================================================================
 # DDFM Experiments
@@ -337,11 +349,15 @@ def run_evaluation():
     
     results = []
     
-    # PALM baselines
+    # PALM baselines + option PALM variants (if present)
     palm_files = {
         "PALM1": os.path.join(EXPERIMENTS_DIR, "palm", "palm1.png"),
         "PALM5": os.path.join(EXPERIMENTS_DIR, "palm", "palm5.png"),
         "PALM10": os.path.join(EXPERIMENTS_DIR, "palm", "palm10.png"),
+        "O1_PALM1": os.path.join(EXPERIMENTS_DIR, "palm", "palm1_us_only.png"),
+        "O1_PALM5": os.path.join(EXPERIMENTS_DIR, "palm", "palm5_us_only.png"),
+        "O2_PALM1": os.path.join(EXPERIMENTS_DIR, "palm", "palm1_mri_only.png"),
+        "O2_PALM5": os.path.join(EXPERIMENTS_DIR, "palm", "palm5_mri_only.png"),
     }
     
     for name, path in palm_files.items():
@@ -374,7 +390,11 @@ def run_evaluation():
     # Hybrids
     hybrid_names = [
         "P1_D10", "P1_D25", "P1_D50", "P1_D75", "P1_D100",
-        "P5_D10", "P5_D25", "P5_D50", "P5_D75", "P5_D100"
+        "P5_D10", "P5_D25", "P5_D50", "P5_D75", "P5_D100",
+        "O1_P1_D10", "O1_P1_D25", "O1_P1_D50", "O1_P1_D75", "O1_P1_D100",
+        "O1_P5_D10", "O1_P5_D25", "O1_P5_D50", "O1_P5_D75", "O1_P5_D100",
+        "O2_P1_D10", "O2_P1_D25", "O2_P1_D50", "O2_P1_D75", "O2_P1_D100",
+        "O2_P5_D10", "O2_P5_D25", "O2_P5_D50", "O2_P5_D75", "O2_P5_D100",
     ]
     
     for name in hybrid_names:
@@ -448,13 +468,13 @@ def main():
         print("\n" + "="*70)
         print("Running Option 1: US-only PALM")
         print("="*70)
-        print("  WARNING: Option 1 not fully implemented yet")
+        run_option("option1")
     
     if args.all or args.option2:
         print("\n" + "="*70)
         print("Running Option 2: MRI-only PALM")
         print("="*70)
-        print("  WARNING: Option 2 not fully implemented yet")
+        run_option("option2")
     
     if args.all or args.ddfm:
         print("\n" + "="*70)
