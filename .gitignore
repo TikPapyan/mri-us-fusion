@@ -5,6 +5,7 @@
 DDFM/models/*.pt
 PALM/models/*.pth
 data/*.mat
+experiments/
 
 # Temporary files
 __pycache__/
